@@ -200,6 +200,23 @@ function insertJiraTicketIntoMessage(messageInfo: MessageInfo, jiraTicket: strin
   return lines.join('\n');
 }
 
+function isInsideWorktree(gitRoot: string) {
+  debug('isInsideWorktree');
+
+  const cwd = process.cwd();
+  const args = [];
+
+  args.push('-C', gitRoot, 'rev-parse', '--is-inside-work-tree');
+
+  const { status, stderr, stdout } = cp.spawnSync('git', args, { cwd, encoding: 'utf-8' });
+
+  if (status !== 0) {
+    throw new Error(stderr.toString());
+  }
+
+  return stdout.toString().trim() === 'true';
+}
+
 export type GitRevParseResult = {
   prefix: string;
   gitCommonDir: string;
@@ -215,7 +232,9 @@ export function gitRevParse(cwd = process.cwd(), gitRoot = ''): GitRevParseResul
     args.push('--git-dir', gitRoot);
   }
 
-  args.push('rev-parse', '--show-prefix', '--git-common-dir');
+  const dirArgument = isInsideWorktree(gitRoot) ? '--git-dir' : '--git-common-dir';
+
+  args.push('rev-parse', '--show-prefix', dirArgument);
 
   // https://github.com/typicode/husky/issues/580
   // https://github.com/typicode/husky/issues/587
