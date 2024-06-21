@@ -259,7 +259,11 @@ export function getRoot(gitRoot: string): string {
 
   const cwd = process.cwd();
 
-  const { gitCommonDir } = gitRevParse(cwd, gitRoot);
+  const isWorktree = isInsideWorktree(gitRoot);
+
+  const gitRootDir = isWorktree ? gitRoot : '';
+
+  const { gitCommonDir } = gitRevParse(cwd, gitRootDir);
 
   // Git rev-parse returns unknown options as is.
   // If we get --absolute-git-dir in the output,
@@ -308,7 +312,7 @@ export function getJiraTicket(branchName: string, config: JPCMConfig): string | 
 export function writeJiraTicket(jiraTicket: string, config: JPCMConfig): void {
   debug('writeJiraTicket');
 
-  const messageFilePath = getMsgFilePath(config.gitRoot);
+  const messageFilePath = getMsgFilePath(getRoot(config.gitRoot));
   let message;
 
   // Read file with commit message
